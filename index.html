@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nihal Khan's Cosmos Explorer - 3D Solar System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+            overflow: hidden;
+            color: white;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #canvas {
+            display: block;
+            cursor: grab;
+        }
+
+        #canvas:active {
+            cursor: grabbing;
+        }
+
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 20, 40, 0.9);
+            border: 1px solid rgba(100, 200, 255, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 100, 200, 0.2);
+        }
+
+        #controlPanel {
+            top: 20px;
+            left: 20px;
+            width: 280px;
+        }
+
+        #infoPanel {
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #bottomPanel {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group h3 {
+            color: #64b5f6;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(100, 200, 255, 0.3);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+        }
+
+        button.active {
+            background: linear-gradient(135deg, #f57c00, #ef6c00);
+            box-shadow: 0 0 15px rgba(245, 124, 0, 0.5);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            background: rgba(100, 200, 255, 0.3);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #64b5f6;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .info-section {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(100, 200, 255, 0.2);
+        }
+
+        .info-section:last-child {
+            border-bottom: none;
+        }
+
+        .info-section h3 {
+            color: #81c784;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .info-section p {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #e0e0e0;
+        }
+
+        .distance-info {
+            background: rgba(25, 118, 210, 0.2);
+            padding: 8px;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 20, 40, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid rgba(100, 200, 255, 0.5);
+            max-width: 500px;
+            z-index: 1000;
+        }
+
+        #instructions h2 {
+            color: #64b5f6;
+            margin-bottom: 20px;
+        }
+
+        #instructions ul {
+            text-align: left;
+            margin: 15px 0;
+        }
+
+        #instructions li {
+            margin: 8px 0;
+            color: #e0e0e0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .physics-highlight {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 8px;
+            border-radius: 6px;
+            margin: 5px 0;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .asteroid {
+            position: absolute;
+            background: #888;
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+        }
+        
+        #title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #64b5f6;
+            text-shadow: 0 0 10px rgba(100, 200, 255, 0.5);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="title">Nihal Khan's Cosmos Explorer</div>
+        <canvas id="canvas"></canvas>
+        
+        <div id="instructions">
+            <h2>🚀 Nihal Khan's Cosmos Explorer</h2>
+            <p>Explore our solar system in 3D with smooth zoom and planet tracking!</p>
+            <ul>
+                <li><strong>Mouse:</strong> Click and drag to rotate view</li>
+                <li><strong>Scroll:</strong> Zoom in/out</li>
+                <li><strong>Planet Buttons:</strong> Click to zoom and track planets</li>
+                <li><strong>Free View:</strong> Click background to exit planet tracking</li>
+            </ul>
+            <button onclick="startExploration()">Begin Space Journey</button>
+        </div>
+
+        <div id="controlPanel" class="ui-panel">
+            <div class="control-group">
+                <h3>🌌 Planet Zoom</h3>
+                <div class="button-group">
+                    <button onclick="zoomToPlanet('sun')">Sun</button>
+                    <button onclick="zoomToPlanet('mercury')">Mercury</button>
+                    <button onclick="zoomToPlanet('venus')">Venus</button>
+                    <button onclick="zoomToPlanet('earth')">Earth</button>
+                    <button onclick="zoomToPlanet('mars')">Mars</button>
+                    <button onclick="zoomToPlanet('jupiter')">Jupiter</button>
+                    <button onclick="zoomToPlanet('saturn')">Saturn</button>
+                    <button onclick="zoomToPlanet('uranus')">Uranus</button>
+                    <button onclick="zoomToPlanet('neptune')">Neptune</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>⏱️ Time Control</h3>
+                <div class="button-group">
+                    <button onclick="togglePause()" id="pauseBtn">Pause</button>
+                    <button onclick="resetTime()">Reset Time</button>
+                    <button onclick="resetView()">Reset View</button>
+                </div>
+                <div class="slider-container">
+                    <span>Speed:</span>
+                    <input type="range" id="timeSpeed" min="0.1" max="10" step="0.1" value="1" onchange="updateTimeSpeed()">
+                    <span id="speedValue">1x</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🔭 Display</h3>
+                <div class="slider-container">
+                    <span>Zoom:</span>
+                    <input type="range" id="zoomSlider" min="0.1" max="3" step="0.1" value="1" onchange="updateZoom()">
+                    <span id="zoomValue">1x</span>
+                </div>
+                <div class="button-group">
+                    <button onclick="toggleOrbits()" id="orbitsBtn">Hide Orbits</button>
+                    <button onclick="toggleLabels()" id="labelsBtn">Hide Labels</button>
+                    <button onclick="toggleAsteroids()" id="asteroidsBtn">Hide Asteroids</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="infoPanel" class="ui-panel">
+            <div id="bodyInfo">
+                <div class="info-section">
+                    <h3>🌠 Welcome Explorer!</h3>
+                    <p>Click on planets or use the buttons to zoom and learn fascinating facts about our cosmic neighborhood.</p>
+                    <div class="physics-highlight">
+                        <p>This simulation shows relative sizes and distances (not to scale). Real solar system distances are much larger!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="bottomPanel" class="ui-panel">
+            <span>Space Days: <strong id="dayCounter">0</strong></span>
+            <span>|</span>
+            <span>Viewing: <strong id="currentFocus">Free View</strong></span>
+            <span>|</span>
+            <span>Zoom: <strong id="zoomLevel">1x</strong></span>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let canvas, ctx;
+        let camera = { 
+            x: 0, 
+            y: 0, 
+            zoom: 1,
+            targetZoom: 1,
+            rotation: 0,
+            targetX: 0,
+            targetY: 0,
+            isMoving: false
+        };
+        let mouse = { x: 0, y: 0, down: false, lastX: 0, lastY: 0 };
+        let time = 0;
+        let timeSpeed = 1;
+        let isPaused = false;
+        let scale = 1;
+        let showOrbits = true;
+        let showLabels = true;
+        let showAsteroids = true;
+        let currentFocus = null;
+        let focusTarget = null;
+        let asteroids = [];
+        let zoomAnimation = null;
+
+        // Celestial bodies data
+        const bodies = {
+            sun: {
+                name: "Sun",
+                radius: 40,
+                color: "#FDB813",
+                x: 0, y: 0,
+                mass: 1989000,
+                zoomLevel: 0.5,
+                info: {
+                    description: "Our star - a massive ball of plasma that provides energy for all life on Earth.",
+                    facts: [
+                        "Temperature: 5,778 K (surface)",
+                        "Mass: 333,000 times Earth's mass",
+                        "Age: ~4.6 billion years",
+                        "Contains 99.86% of solar system's mass"
+                    ],
+                    physics: "Nuclear fusion in the Sun's core converts 600 million tons of hydrogen to helium every second."
+                }
+            },
+            mercury: {
+                name: "Mercury",
+                radius: 4,
+                color: "#A9A9A9",
+                distance: 100,
+                speed: 0.04,
+                angle: 0,
+                x: 0, y: 0,
+                mass: 0.055,
+                zoomLevel: 3,
+                info: {
+                    description: "The smallest and fastest planet, with extreme temperature variations.",
+                    facts: [
+                        "Day length: 59 Earth days",
+                        "Year length: 88 Earth days",
+                        "Surface: Heavily cratered",
+                        "Atmosphere: Almost nonexistent"
+                    ],
+                    physics: "Mercury's orbit precesses due to relativistic effects, confirming Einstein's theory."
+                }
+            },
+            venus: {
+                name: "Venus",
+                radius: 9,
+                color: "#E6C229",
+                distance: 150,
+                speed: 0.015,
+                angle: 0,
+                x: 0, y: 0,
+                mass: 0.815,
+                zoomLevel: 3,
+                info: {
+                    description: "Earth's 'twin' with a runaway greenhouse effect and toxic atmosphere.",
+                    facts: [
+                        "Rotation: Backwards (retrograde)",
+                        "Surface pressure: 92x Earth's",
+                        "Hottest planet: 462°C average",
+                        "Volcanoes: Over 1,600 major ones"
+                    ],
+                    physics: "Venus's thick CO₂ atmosphere creates extreme greenhouse effect, making it hotter than Mercury."
+                }
+            },
+            earth: {
+                name: "Earth",
+                radius: 10,
+                color: "#6B93D6",
+                distance: 200,
+                speed: 0.01,
+                angle: 0,
+                x: 0, y: 0,
+                mass: 1,
+                zoomLevel: 3,
+                info: {
+                    description: "The only known planet with life - our precious blue marble in space.",
+                    facts: [
+                        "Oceans cover 71% of surface",
+                        "Orbital speed: 107,000 km/h",
+                        "Tilt: 23.5° (causes seasons)",
+                        "Moon: 1/4 Earth's diameter"
+                    ],
+                    physics: "Earth's magnetic field, generated by molten core, protects us from solar radiation."
+                }
+            },
+            moon: {
+                name: "Moon",
+                radius: 3,
+                color: "#C0C0C0",
+                distance: 30,
+                speed: 0.13,
+                angle: 0,
+                parent: 'earth',
+                x: 0, y: 0,
+                mass: 0.012,
+                zoomLevel: 5,
+                info: {
+                    description: "Earth's only natural satellite, stabilizing our climate and creating tides.",
+                    facts: [
+                        "Distance: 384,400 km from Earth",
+                        "Gravity: 1/6 of Earth's",
+                        "Surface: Ancient lava plains",
+                        "Formed: Giant impact theory"
+                    ],
+                    physics: "The Moon is slowly moving away at 3.8 cm/year, lengthening Earth's day."
+                }
+            },
+            mars: {
+                name: "Mars",
+                radius: 7,
+                color: "#CD5C5C",
+                distance: 300,
+                speed: 0.008,
+                angle: Math.PI,
+                x: 0, y: 0,
+                mass: 0.107,
+                zoomLevel: 3,
+                info: {
+                    description: "The Red Planet - home to Olympus Mons, the solar system's tallest volcano.",
+                    facts: [
+                        "Moons: Phobos and Deimos",
+                        "Day length: 24.6 hours",
+                        "Atmosphere: 96% CO₂",
+                        "Seasons: Like Earth's but longer"
+                    ],
+                    physics: "Mars has polar ice caps of water and dry ice that change with seasons."
+                }
+            },
+            jupiter: {
+                name: "Jupiter",
+                radius: 25,
+                color: "#F8D874",
+                distance: 500,
+                speed: 0.004,
+                angle: Math.PI/2,
+                x: 0, y: 0,
+                mass: 317.8,
+                zoomLevel: 1.5,
+                info: {
+                    description: "The solar system's giant - a stormy gas planet with 79 moons.",
+                    facts: [
+                        "Great Red Spot: 400-year storm",
+                        "Strongest magnetic field",
+                        "Day length: 9.9 hours",
+                        "Could have become a star"
+                    ],
+                    physics: "Jupiter's immense gravity protects inner planets by deflecting comets and asteroids."
+                }
+            },
+            saturn: {
+                name: "Saturn",
+                radius: 20,
+                color: "#E3DCCB",
+                distance: 650,
+                speed: 0.003,
+                angle: Math.PI,
+                x: 0, y: 0,
+                mass: 95.2,
+                zoomLevel: 1.5,
+                info: {
+                    description: "The ringed wonder - a gas giant with spectacular icy rings.",
+                    facts: [
+                        "Rings: Mostly water ice",
+                        "Density: Less than water",
+                        "Moons: 82 confirmed",
+                        "Hexagonal north pole storm"
+                    ],
+                    physics: "Saturn's rings are only about 20 meters thick but span 282,000 km across."
+                }
+            },
+            uranus: {
+                name: "Uranus",
+                radius: 15,
+                color: "#D1E7E7",
+                distance: 800,
+                speed: 0.002,
+                angle: Math.PI*1.5,
+                x: 0, y: 0,
+                mass: 14.5,
+                zoomLevel: 2,
+                info: {
+                    description: "The sideways planet - an ice giant with extreme seasons.",
+                    facts: [
+                        "Axial tilt: 98°",
+                        "Coldest atmosphere: -224°C",
+                        "Moons: 27 known",
+                        "Discovered: 1781 by telescope"
+                    ],
+                    physics: "Uranus's extreme tilt may result from a giant collision early in solar system history."
+                }
+            },
+            neptune: {
+                name: "Neptune",
+                radius: 15,
+                color: "#5B5DDF",
+                distance: 900,
+                speed: 0.001,
+                angle: 0,
+                x: 0, y: 0,
+                mass: 17.1,
+                zoomLevel: 2,
+                info: {
+                    description: "The windiest planet - a blue ice giant with supersonic storms.",
+                    facts: [
+                        "Winds: 2,100 km/h",
+                        "Discovered: Math first (1846)",
+                        "Moons: 14 known",
+                        "Great Dark Spot: Giant storm"
+                    ],
+                    physics: "Neptune radiates 2.6x more heat than it receives from the Sun due to internal processes."
+                }
+            }
+        };
+
+        function init() {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Mouse controls
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('wheel', onWheel);
+            canvas.addEventListener('click', onCanvasClick);
+            
+            // Create asteroid belt between Mars and Jupiter
+            createAsteroidBelt();
+            
+            gameLoop();
+        }
+
+        function createAsteroidBelt() {
+            asteroids = [];
+            const beltInnerRadius = 350 * scale;
+            const beltOuterRadius = 450 * scale;
+            
+            for (let i = 0; i < 300; i++) {
+                const distance = beltInnerRadius + Math.random() * (beltOuterRadius - beltInnerRadius);
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.005 + Math.random() * 0.002;
+                
+                asteroids.push({
+                    x: Math.cos(angle) * distance,
+                    y: Math.sin(angle) * distance,
+                    angle: angle,
+                    distance: distance,
+                    speed: speed,
+                    size: 1 + Math.random() * 2,
+                    color: `rgba(150, 150, 150, ${Math.random() * 0.5 + 0.5})`
+                });
+            }
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function startExploration() {
+            document.getElementById('instructions').classList.add('hidden');
+        }
+
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function update() {
+            if (!isPaused) {
+                time += timeSpeed * 0.016;
+                
+                // Update orbital positions
+                Object.keys(bodies).forEach(key => {
+                    const body = bodies[key];
+                    if (body.distance) {
+                        if (body.parent) {
+                            const parent = bodies[body.parent];
+                            body.angle += body.speed * timeSpeed;
+                            body.x = parent.x + Math.cos(body.angle) * body.distance * scale;
+                            body.y = parent.y + Math.sin(body.angle) * body.distance * scale;
+                        } else {
+                            body.angle += body.speed * timeSpeed;
+                            body.x = Math.cos(body.angle) * body.distance * scale;
+                            body.y = Math.sin(body.angle) * body.distance * scale;
+                        }
+                    }
+                });
+                
+                // Update asteroids
+                asteroids.forEach(asteroid => {
+                    asteroid.angle += asteroid.speed * timeSpeed;
+                    asteroid.x = Math.cos(asteroid.angle) * asteroid.distance;
+                    asteroid.y = Math.sin(asteroid.angle) * asteroid.distance;
+                });
+
+                // Update day counter
+                document.getElementById('dayCounter').textContent = Math.floor(time * 10);
+            }
+
+            // Smooth camera movement
+            if (focusTarget) {
+                const target = bodies[focusTarget];
+                const targetX = -target.x;
+                const targetY = -target.y;
+                
+                camera.x += (targetX - camera.x) * 0.05;
+                camera.y += (targetY - camera.y) * 0.05;
+                
+                // Smooth zoom adjustment
+                camera.zoom += (camera.targetZoom - camera.zoom) * 0.05;
+            } else {
+                // Smooth zoom adjustment for free view
+                camera.zoom += (camera.targetZoom - camera.zoom) * 0.05;
+            }
+            
+            // Update displayed zoom level
+            document.getElementById('zoomLevel').textContent = camera.zoom.toFixed(1) + 'x';
+        }
+
+        function render() {
+            // Clear canvas
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw stars
+            drawStars();
+            
+            ctx.save();
+            ctx.translate(canvas.width / 2 + camera.x, canvas.height / 2 + camera.y);
+            ctx.scale(camera.zoom, camera.zoom);
+            ctx.rotate(camera.rotation);
+            
+            // Draw orbits
+            if (showOrbits) {
+                drawOrbits();
+            }
+            
+            // Draw asteroid belt
+            if (showAsteroids) {
+                drawAsteroids();
+            }
+            
+            // Draw bodies
+            Object.keys(bodies).forEach(key => {
+                drawBody(bodies[key]);
+            });
+            
+            ctx.restore();
+        }
+
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            for (let i = 0; i < 300; i++) {
+                const x = (i * 37) % canvas.width;
+                const y = (i * 73) % canvas.height;
+                const size = Math.random() * 2;
+                const opacity = Math.random() * 0.8 + 0.2;
+                ctx.globalAlpha = opacity;
+                ctx.fillRect(x, y, size, size);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawOrbits() {
+            ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
+            ctx.lineWidth = 1;
+            
+            Object.keys(bodies).forEach(key => {
+                const body = bodies[key];
+                if (body.distance && !body.parent) {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, body.distance * scale, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                if (body.parent) {
+                    const parent = bodies[body.parent];
+                    ctx.beginPath();
+                    ctx.arc(parent.x, parent.y, body.distance * scale, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            });
+            
+            // Draw asteroid belt area
+            if (showAsteroids) {
+                ctx.strokeStyle = 'rgba(150, 150, 150, 0.2)';
+                ctx.beginPath();
+                ctx.arc(0, 0, 350 * scale, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(0, 0, 450 * scale, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+        
+        function drawAsteroids() {
+            asteroids.forEach(asteroid => {
+                ctx.fillStyle = asteroid.color;
+                ctx.beginPath();
+                ctx.arc(asteroid.x, asteroid.y, asteroid.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawBody(body) {
+            const radius = body.radius * scale;
+            
+            // Draw body
+            const gradient = ctx.createRadialGradient(body.x, body.y, 0, body.x, body.y, radius);
+            gradient.addColorStop(0, body.color);
+            gradient.addColorStop(1, darkenColor(body.color, 0.3));
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(body.x, body.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add glow for sun
+            if (body.name === 'Sun') {
+                ctx.shadowColor = body.color;
+                ctx.shadowBlur = 30;
+                ctx.beginPath();
+                ctx.arc(body.x, body.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            // Draw rings for Saturn
+            if (body.name === 'Saturn') {
+                ctx.strokeStyle = 'rgba(210, 210, 180, 0.7)';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(body.x, body.y, radius * 1.5, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(body.x, body.y, radius * 1.8, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Draw label
+            if (showLabels) {
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(body.name, body.x, body.y + radius + 20);
+            }
+        }
+
+        function darkenColor(color, factor) {
+            const hex = color.replace('#', '');
+            const r = Math.floor(parseInt(hex.substr(0, 2), 16) * (1 - factor));
+            const g = Math.floor(parseInt(hex.substr(2, 2), 16) * (1 - factor));
+            const b = Math.floor(parseInt(hex.substr(4, 2), 16) * (1 - factor));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Event handlers
+        function onMouseDown(e) {
+            mouse.down = true;
+            mouse.lastX = e.clientX;
+            mouse.lastY = e.clientY;
+        }
+
+        function onMouseMove(e) {
+            if (mouse.down && !focusTarget) {
+                const deltaX = e.clientX - mouse.lastX;
+                const deltaY = e.clientY - mouse.lastY;
+                
+                camera.x += deltaX;
+                camera.y += deltaY;
+                
+                mouse.lastX = e.clientX;
+                mouse.lastY = e.clientY;
+            }
+        }
+
+        function onMouseUp(e) {
+            mouse.down = false;
+        }
+
+        function onWheel(e) {
+            e.preventDefault();
+            const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+            camera.targetZoom = Math.max(0.1, Math.min(3, camera.targetZoom * zoomFactor));
+            document.getElementById('zoomSlider').value = camera.targetZoom;
+        }
+
+        function onCanvasClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left - canvas.width / 2 - camera.x;
+            const clickY = e.clientY - rect.top - canvas.height / 2 - camera.y;
+            
+            // Check if clicked on empty space to exit focus
+            let clickedOnBody = false;
+            
+            // Check if clicked on a body
+            Object.keys(bodies).forEach(key => {
+                const body = bodies[key];
+                const distance = Math.sqrt((clickX - body.x) ** 2 + (clickY - body.y) ** 2);
+                if (distance < body.radius * scale * camera.zoom + 10) {
+                    zoomToPlanet(key);
+                    clickedOnBody = true;
+                }
+            });
+            
+            // If clicked on empty space and currently focused on a planet, exit focus
+            if (!clickedOnBody && focusTarget) {
+                resetFocus();
+            }
+        }
+
+        // Control functions
+        function zoomToPlanet(bodyKey) {
+            focusTarget = bodyKey;
+            currentFocus = bodyKey;
+            document.getElementById('currentFocus').textContent = bodies[bodyKey].name;
+            showBodyInfo(bodyKey);
+            
+            // Set target zoom level based on planet
+            camera.targetZoom = bodies[bodyKey].zoomLevel || 1;
+            document.getElementById('zoomSlider').value = camera.targetZoom;
+            
+            // Remove active class from all buttons and add to clicked one
+            document.querySelectorAll('#controlPanel button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function resetFocus() {
+            focusTarget = null;
+            currentFocus = null;
+            document.getElementById('currentFocus').textContent = 'Free View';
+            document.getElementById('bodyInfo').innerHTML = `
+                <div class="info-section">
+                    <h3>🌌 Free Exploration Mode</h3>
+                    <p>Navigate freely through the solar system. Click on planets or use the buttons to zoom in.</p>
+                    <div class="physics-highlight">
+                        <p>Tip: Use the zoom slider or mouse wheel to adjust your view.</p>
+                    </div>
+                </div>
+            `;
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('#controlPanel button').forEach(btn => btn.classList.remove('active'));
+        }
+
+        function showBodyInfo(bodyKey) {
+            const body = bodies[bodyKey];
+            const infoPanel = document.getElementById('bodyInfo');
+            
+            let distanceInfo = '';
+            if (bodyKey !== 'sun') {
+                const earthDistance = Math.sqrt((body.x - bodies.earth.x) ** 2 + (body.y - bodies.earth.y) ** 2);
+                distanceInfo = `<div class="distance-info">Current distance from Earth: ${(earthDistance * 0.1).toFixed(1)} million km</div>`;
+            }
+            
+            infoPanel.innerHTML = `
+                <div class="info-section">
+                    <h3>${body.name}</h3>
+                    <p>${body.info.description}</p>
+                    ${distanceInfo}
+                </div>
+                <div class="info-section">
+                    <h3>📊 Key Facts</h3>
+                    ${body.info.facts.map(fact => `<p>• ${fact}</p>`).join('')}
+                </div>
+                <div class="info-section physics-highlight">
+                    <h3>⚡ Physics Insight</h3>
+                    <p>${body.info.physics}</p>
+                </div>
+            `;
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? 'Resume' : 'Pause';
+        }
+
+        function resetTime() {
+            time = 0;
+            Object.keys(bodies).forEach(key => {
+                const body = bodies[key];
+                if (body.distance) {
+                    if (key === 'mars') body.angle = Math.PI;
+                    else if (key === 'jupiter') body.angle = Math.PI/2;
+                    else if (key === 'saturn') body.angle = Math.PI;
+                    else if (key === 'uranus') body.angle = Math.PI*1.5;
+                    else if (key === 'neptune') body.angle = 0;
+                    else body.angle = 0;
+                }
+            });
+        }
+
+        function resetView() {
+            camera.x = 0;
+            camera.y = 0;
+            camera.zoom = 1;
+            camera.targetZoom = 1;
+            camera.rotation = 0;
+            document.getElementById('zoomSlider').value = 1;
+            resetFocus();
+        }
+
+        function updateTimeSpeed() {
+            timeSpeed = parseFloat(document.getElementById('timeSpeed').value);
+            document.getElementById('speedValue').textContent = timeSpeed.toFixed(1) + 'x';
+        }
+
+        function updateZoom() {
+            camera.targetZoom = parseFloat(document.getElementById('zoomSlider').value);
+        }
+
+        function toggleOrbits() {
+            showOrbits = !showOrbits;
+            document.getElementById('orbitsBtn').textContent = showOrbits ? 'Hide Orbits' : 'Show Orbits';
+        }
+
+        function toggleLabels() {
+            showLabels = !showLabels;
+            document.getElementById('labelsBtn').textContent = showLabels ? 'Hide Labels' : 'Show Labels';
+        }
+        
+        function toggleAsteroids() {
+            showAsteroids = !showAsteroids;
+            document.getElementById('asteroidsBtn').textContent = showAsteroids ? 'Hide Asteroids' : 'Show Asteroids';
+        }
+
+        // Initialize the game
+        init();
+    </script>
+</body>
+</html></title>
+</head>
+<body>
+    
+</body>
+</html>
